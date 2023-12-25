@@ -5,24 +5,25 @@ use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 use std::str;
 
-pub struct Request {
-    path: String,
-    query_string: Option<String>,
+pub struct Request<'buf> {
+    path: &'buf str,
+    query_string: Option<&'buf str>,
     method: Method,
 }
 
 
-impl TryFrom<&[u8]> for Request {
+impl<'buf> TryFrom<&'buf [u8]> for Request<'buf> {
     type Error = ParseError;
 
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+    fn try_from(buf: &'buf [u8]) -> Result<Self, Self::Error> {
+        let request = str::from_utf8(buf)?;
+
         // match str::from_utf8(value).or(Err(ParseError::InvalidEncoding)) {
         //     Ok(request) => {},
         //     Err(e) => return Err(e),
         // }
         // ?는 Ok인 경우 변수에 값을 저장하고 Err인 경우 return 한다
         // from_utf8 내부에서 던지는 Utf8Error를 ParseError로 바꾸기 위해서는 From trait을 아래처럼 구현해야 한다.
-        let request = str::from_utf8(value)?;
 
         // match get_next_word(request) {
         //     Some((method, request)) => {},
@@ -34,7 +35,7 @@ impl TryFrom<&[u8]> for Request {
         let (protocol, _) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
 
         if protocol != "HTTP/1.1" {
-            return Err(ParseError::InvalidProtocol)
+            return Err(ParseError::InvalidProtocol);
         }
 
         let method: Method = method.parse()?;
@@ -59,12 +60,15 @@ impl TryFrom<&[u8]> for Request {
         // }
 
         if let Some(i) = path.find('?') {
-            query_string = Some(&path[i+1..]);
+            query_string = Some(&path[i + 1..]);
             path = &path[..i];
         }
 
-
-        unimplemented!()
+        Ok(Self {
+            path,
+            query_string,
+            method,
+        })
     }
 }
 
@@ -79,7 +83,7 @@ fn get_next_word(request: &str) -> Option<(&str, &str)> {
     // }
 
     for (i, c) in request.chars().enumerate() {
-        if c == ' '  || c == '\r' {
+        if c == ' ' || c == '\r' {
             // 일반으로 1을 단순히 더하는 것은 utf-8 때문에 위험하지만 빈 공백은 무조건 1 byte이기 때문에 이 경우는 안전하다
             return Some((&request[..i], &request[i + 1..]));
         }
