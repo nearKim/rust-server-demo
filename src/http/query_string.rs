@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use crate::http::query_string::Value::Single;
-
+#[derive(Debug)]
 pub struct QueryString<'buf> {
     data: HashMap<&'buf str, Value<'buf>>
 }
-
+#[derive(Debug)]
 pub enum Value<'buf> {
     Single(&'buf str),
     Multiple(Vec<&'buf str>)  // Vector는 동적으로 Heap에 원소를 할당한다
