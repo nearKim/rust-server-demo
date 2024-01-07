@@ -11,7 +11,7 @@ impl StatusCode {
         match self {
             Self::Ok => "Ok",
             Self::BadRequest => "Bad Request",
-            Self::NotFound => "Not Found"
+            Self::NotFound => "Not Found",
         }
     }
 }

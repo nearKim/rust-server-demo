@@ -1,6 +1,6 @@
 use crate::http::{Request, Response, StatusCode};
 use std::convert::TryFrom;
-use std::io::{Write, Read};
+use std::io::{Read, Write};
 use std::net::TcpListener;
 
 pub struct Server {
@@ -8,9 +8,7 @@ pub struct Server {
 }
 impl Server {
     pub fn new(addr: String) -> Self {
-        Self  {
-            addr
-        }
+        Self { addr }
     }
 
     pub fn run(self) {
@@ -27,13 +25,16 @@ impl Server {
                             let response = match Request::try_from(&buffer[..]) {
                                 Ok(request) => {
                                     dbg!(request);
-                                    Response::new(StatusCode::Ok, Some("<h1>It Works!</h1>".to_string()));
-                                },
+                                    Response::new(
+                                        StatusCode::Ok,
+                                        Some("<h1>It Works!</h1>".to_string()),
+                                    );
+                                }
                                 Err(e) => {
-                                    println!("Failed to parse a request: {}", e)
+                                    println!("Failed to parse a request: {}", e);
                                     Response::new(StatusCode::BadRequest, None).send(&mut stream)
-                                },
-                            }
+                                }
+                            };
 
                             if let Err(e) = response.send(&mut stream) {
                                 println!("Failed to send response: {}", e);
@@ -41,9 +42,8 @@ impl Server {
                         }
                         Err(e) => println!("Failed to read from connection: {}", e),
                     }
-                },
+                }
                 Err(e) => println!("Failed to establish a connection: {}", e),
-
             }
         }
     }
